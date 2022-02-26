@@ -63,6 +63,5 @@ function sendFile(array $post): ?array
 	if (!$out)
 		return NULL;
 
-	var_dump($out);
 	return json_decode($out, true);
 }
