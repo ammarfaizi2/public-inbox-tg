@@ -160,12 +160,8 @@ function fx(string $input): int
 	$tgCCs = array_merge(...[listTelegramLookup($toList), listTelegramLookup($ccList)]);
 	$tgCCs = array_unique($tgCCs);
 
-	if (count($tgCCs) > 0) {
-		$msg .= "Telegram-Cc: ";
-		foreach ($tgCCs as $tgCC)
-			$msg .= $tgCC;
-		$msg .= "\n";
-	}
+	if (count($tgCCs) > 0)
+		$msg .= "Telegram-Cc: ".implode(" ", $tgCCs)."\n";
 
 	$msg .= "Date: {$date}\n";
 	$msg .= "Subject: {$subject}";
