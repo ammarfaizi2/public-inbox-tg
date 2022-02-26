@@ -143,7 +143,7 @@ function fx(string $input): int
 
 	if (preg_match("/(?:^|\\n)cc:\s+?(.+?)(\\n\S+\:|\\n\\n)/si", $hdr, $m)) {
 		$ccList = extractList(clean_header_val($m[1]));
-		$ccListStr = buildList($toList, "Cc");
+		$ccListStr = buildList($ccList, "Cc");
 	} else {
 		$ccListStr = "";
 	}
