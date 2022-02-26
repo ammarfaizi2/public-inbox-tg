@@ -10,19 +10,50 @@ const TARGET_CHAT_ID = -1001483770714;
 // // Private Cloud
 // const TARGET_CHAT_ID = -1001226735471;
 
+const DATA_DIR = __DIR__."/../data";
+
 require __DIR__."/../lib.php";
 
-function buildList(string $cc, string $name): string
+function listTelegramLookup(array $list): array
 {
-	if (empty($cc))
-		return "";
+	$ret = [];
 
-	$ret = "";
-	$ccs = explode(",", $cc);
-	foreach ($ccs as $cc)
-		$ret .= "{$name}: ".trim($cc)."\n";
+	if (!is_dir(DATA_DIR))
+		mkdir(DATA_DIR);
+
+	if (!is_dir(DATA_DIR."/tg"))
+		mkdir(DATA_DIR."/tg");
+
+	foreach ($list as $c) {
+		if (preg_match("/.+\<(.+?)\>/", $c, $m))
+			$c = $m[1];
+
+		$u = DATA_DIR."/tg/".$c;
+		if (!file_exists($u))
+			continue;
+
+		$ret[] = trim(file_get_contents($u));
+	}
 
 	return $ret;
+}
+
+function extractList(string $str): array
+{
+	$str = explode(",", $str);
+	foreach ($str as &$c)
+		$c = trim($c);
+
+	return $str;
+}
+
+function buildList(array $list, string $name): string
+{
+	$ret = "";
+	foreach ($list as $c)
+		$ret .= "{$name}: ".trim($c)."\n";
+
+	return trim($ret);
 }
 
 // Thanks to https://stackoverflow.com/a/2955878/7275114
@@ -104,27 +135,37 @@ function fx(string $input): int
 
 	$err = "";
 	if (preg_match("/(?:^|\\n)to:\s+?(.+?)(?:\\n\S+\:|\\n\\n)/si", $hdr, $m)) {
-		$to = clean_header_val($m[1]);
-		$toList = trim(buildList($to, "To"));
+		$toList = extractList(clean_header_val($m[1]));
+		$toListStr = buildList($toList, "To");
 	} else {
-		$toList = "";
+		$toListStr = "";
 	}
 
 	if (preg_match("/(?:^|\\n)cc:\s+?(.+?)(\\n\S+\:|\\n\\n)/si", $hdr, $m)) {
-		$cc = clean_header_val($m[1]);
-		$ccList = trim(buildList($cc, "Cc"));
+		$ccList = extractList(clean_header_val($m[1]));
+		$ccListStr = buildList($toList, "Cc");
 	} else {
-		$ccList = "";
+		$ccListStr = "";
 	}
 
 	$content = trim(substr($body, 0, MAX_BODYLEN));
 	$msg = "#ml\nFrom: {$from}\n";
 
-	if ($toList)
-		$msg .= "{$toList}\n";
+	if ($toListStr)
+		$msg .= "{$toListStr}\n";
 
-	if ($ccList)
-		$msg .= "{$ccList}\n";
+	if ($ccListStr)
+		$msg .= "{$ccListStr}\n";
+
+	$tgCCs = array_merge(...[listTelegramLookup($toList), listTelegramLookup($ccList)]);
+	$tgCCs = array_unique($tgCCs);
+
+	if (count($tgCCs) > 0) {
+		$msg .= "Telegram-Cc: ";
+		foreach ($tgCCs as $tgCC)
+			$msg .= $tgCC;
+		$msg .= "\n";
+	}
 
 	$msg .= "Date: {$date}\n";
 	$msg .= "Subject: {$subject}";
