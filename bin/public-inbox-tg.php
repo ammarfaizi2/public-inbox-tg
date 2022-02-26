@@ -157,7 +157,10 @@ function fx(string $input): int
 	if ($ccListStr)
 		$msg .= "{$ccListStr}\n";
 
-	$tgCCs = array_merge(...[listTelegramLookup($toList), listTelegramLookup($ccList)]);
+	$tgCCs = array_merge(...[
+		listTelegramLookup($toList ?? []),
+		listTelegramLookup($ccList ?? [])
+	]);
 	$tgCCs = array_unique($tgCCs);
 
 	if (count($tgCCs) > 0)
