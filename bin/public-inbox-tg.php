@@ -39,6 +39,27 @@ function listTelegramLookup(array $list): array
 	return $ret;
 }
 
+function tgMsgIdInsert(string $msgId, int $tgMsgId): bool
+{
+	if (!is_dir(DATA_DIR))
+		mkdir(DATA_DIR);
+
+	if (!is_dir(DATA_DIR."/tg_msg_id"))
+		mkdir(DATA_DIR."/tg_msg_id");
+
+	$file = DATA_DIR."/tg_msg_id/".sha1($msgId);
+	return (bool) file_put_contents($file, (string) $tgMsgId);
+}
+
+function tgMsgIdLookup(string $msgId): int
+{
+	$file = DATA_DIR."/tg_msg_id/".sha1($msgId);
+	if (!file_exists($file))
+		return 0;
+
+	return (int) file_get_contents($file);
+}
+
 function extractList(string $str): array
 {
 	$str = explode(",", $str);
@@ -132,7 +153,15 @@ function fx(string $input): int
 	}
 	$msgId = $m[1];
 	if ($msgId[0] === '<' && $msgId[strlen($msgId) - 1] === '>')
-		$msgId = substr(clean_header_val($m[1]), 1, -1);
+		$msgId = substr(clean_header_val($msgId), 1, -1);
+
+	if (preg_match("/(?:^|\\n)in-reply-to:\s+?(.+?)(?:\\n\S+\:|\\n\\n)/si", $hdr, $m)) {
+		$inReplyTo = $m[1];
+		if ($inReplyTo[0] === '<' && $inReplyTo[strlen($inReplyTo) - 1] === '>')
+			$inReplyTo = substr(clean_header_val($inReplyTo), 1, -1);
+	} else {
+		$inReplyTo = NULL;
+	}
 
 	$err = "";
 	if (preg_match("/(?:^|\\n)to:\s+?(.+?)(?:\\n\S+\:|\\n\\n)/si", $hdr, $m)) {
@@ -181,6 +210,8 @@ function fx(string $input): int
 		]
 	];
 
+	$replyToTgMsgId = $inReplyTo ? tgMsgIdLookup($msgId) : 0;
+
 	if (preg_match("/\[.*(?:patch|rfc).*?(?:(\d+)\/(\d+))?\](.+)/i", $subject, $m) &&
 	    preg_match("/diff --git/", $body)) {
 
@@ -191,15 +222,15 @@ function fx(string $input): int
 		if (!$n)
 			$n = 1;
 
-		$file = sprintf("%s/%04d-%s.patch", $tmpDir, $n,
-				substr(slugify(trim($m[3])), 0, 40));
+		$file = sprintf("%s/%04d-%s.patch", $tmpDir, $n, substr(slugify(trim($m[3])), 0, 40));
 		file_put_contents($file, $input);
 
-		sendFile([
+		$o = sendFile([
 			"chat_id" => TARGET_CHAT_ID,
 			"document" => new \CurlFile($file),
 			"caption" => "#patch ".$msg,
-			"reply_markup" => json_encode($replyMarkup)
+			"reply_markup" => json_encode($replyMarkup),
+			"reply_to_message_id" => $replyToTgMsgId
 		]);
 		unlink($file);
 		rmdir($tmpDir);
@@ -211,13 +242,18 @@ function fx(string $input): int
 		$msg = htmlspecialchars($msg, ENT_QUOTES, "UTF-8");
 		$msg .= "\n<code>------------------------------------------------------------------------</code>";
 
-		sendMessage($msg, TARGET_CHAT_ID,
+		$o = sendMessage($msg, TARGET_CHAT_ID,
 			[
 				"parse_mode" => "HTML",
-				"reply_markup" => $replyMarkup
+				"reply_markup" => $replyMarkup,
+				"reply_to_message_id" => $replyToTgMsgId
 			]
 		);
 	}
+
+	if (isset($o["result"]["message_id"]))
+		tgMsgIdInsert($msgId, $o["result"]["message_id"]);
+
 out:
 	if ($err)
 		echo $err;
