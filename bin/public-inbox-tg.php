@@ -11,6 +11,7 @@ const TARGET_CHAT_ID = -1001483770714;
 // const TARGET_CHAT_ID = -1001226735471;
 
 const DATA_DIR = __DIR__."/../data";
+const LOCK_FILE = DATA_DIR."/inbox.lock";
 
 require __DIR__."/../lib.php";
 
@@ -223,4 +224,22 @@ out:
 	return 0;
 }
 
-exit(fx(file_get_contents("php://stdin")));
+
+function main(): int
+{
+	if (!is_dir(DATA_DIR))
+		mkdir(DATA_DIR);
+
+	$handle = fopen(LOCK_FILE, "a");
+	if (!$handle) {
+		printf("Cannot open the lock file: %s\n", LOCK_FILE);
+		return 1;
+	}
+	flock($handle, LOCK_EX);
+	$ret = fx(file_get_contents("php://stdin"));
+	flock($handle, LOCK_UN);
+	fclose($handle);
+	return $ret;
+}
+
+exit(main());
