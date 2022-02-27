@@ -210,7 +210,7 @@ function fx(string $input): int
 		]
 	];
 
-	$replyToTgMsgId = $inReplyTo ? tgMsgIdLookup($msgId) : 0;
+	$replyToTgMsgId = $inReplyTo ? tgMsgIdLookup($inReplyTo) : 0;
 
 	if (preg_match("/\[.*(?:patch|rfc).*?(?:(\d+)\/(\d+))?\](.+)/i", $subject, $m) &&
 	    preg_match("/diff --git/", $body)) {
