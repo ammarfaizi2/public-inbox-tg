@@ -204,7 +204,7 @@ function fx(string $input): int
 			[
 				[
 					"text" => "See the full message",
-					"url" => "https://lore.gnuweeb.org/gwml/{$msgId}",
+					"url" => "https://lore.gnuweeb.org/gwml/".urlencode($msgId),
 				]
 			]
 		]
