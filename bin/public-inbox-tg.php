@@ -178,6 +178,7 @@ function fx(string $input): int
 		$ccListStr = "";
 	}
 
+	$content = str_replace("\t", "        ", $content);
 	$content = trim(substr($body, 0, MAX_BODYLEN));
 	$msg = "#ml\nFrom: {$from}\n";
 
