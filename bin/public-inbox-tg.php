@@ -236,9 +236,15 @@ function fx(string $input): int
 		unlink($file);
 		rmdir($tmpDir);
 	} else {
-		$msg .= "\n\n{$content}";
-		if (strlen($body) > MAX_BODYLEN)
-			$msg .= "...";
+		if (preg_match("/kernel test robot/", $from)) {
+			// Skip the android tree.
+			if (preg_match("/android/", $subject))
+				return 0;
+		} else {
+			$msg .= "\n\n{$content}";
+			if (strlen($body) > MAX_BODYLEN)
+				$msg .= "...";
+		}
 
 		$msg = htmlspecialchars($msg, ENT_QUOTES, "UTF-8");
 		$msg .= "\n<code>------------------------------------------------------------------------</code>";
