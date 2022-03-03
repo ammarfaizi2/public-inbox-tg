@@ -212,7 +212,8 @@ function fx(string $input): int
 
 	$replyToTgMsgId = $inReplyTo ? tgMsgIdLookup($inReplyTo) : 0;
 
-	if (preg_match("/\[.*(?:patch|rfc).*?(?:(\d+)\/(\d+))?\](.+)/i", $subject, $m) &&
+	if (strtolower(substr($subject, 0, 4)) !== "re: " &&
+	    preg_match("/\[.*(?:patch|rfc).*?(?:(\d+)\/(\d+))?\](.+)/i", $subject, $m) &&
 	    preg_match("/diff --git/", $body)) {
 
 		$tmpDir = "/tmp/".date("Y_m_d_H_i_s_").rand();
