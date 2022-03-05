@@ -62,11 +62,29 @@ function tgMsgIdLookup(string $msgId): int
 
 function extractList(string $str): array
 {
-	$str = explode(",", $str);
-	foreach ($str as &$c)
-		$c = trim($c);
+	$sz = strlen($str);
+	if (!$sz)
+		return [];
 
-	return $str;
+	$tmp = "";
+	$container = [];
+	$is_in_quotes = false;
+	for ($i = 0; $i <= $sz; $i++) {
+		if ($i >= $sz)
+			goto g;
+		$c = $str[$i];
+		if ($c == '"')
+			$is_in_quotes = !$is_in_quotes;
+
+		if (($c == "," && !$is_in_quotes)) {
+	g:
+			$container[] = trim($tmp);
+			$tmp = "";
+			continue;
+		}
+		$tmp .= $c;
+	}
+	return $container;
 }
 
 function buildList(array $list, string $name): string
