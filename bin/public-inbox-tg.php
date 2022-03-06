@@ -145,27 +145,27 @@ function fx(string $input): int
 	}
 
 	$body = trim($hdr[1]);
-	$hdr = $hdr[0];
+	$hdr = trim($hdr[0]);
 
-	if (!preg_match("/(?:^|\\n)subject:\s+?(.+?)(?:\\n\S+\:|\\n\\n)/si", $hdr, $m)) {
+	if (!preg_match("/(?:^|\\n)subject:\s+?(.+?)(?:\\n\S+\:|$)/si", $hdr, $m)) {
 		$err = "Cannot get the \"subject\" line";
 		goto out;
 	}
 	$subject = clean_header_val($m[1]);
 
-	if (!preg_match("/(?:^|\\n)from:\s+?(.+?)(?:\\n\S+\:|\\n\\n)/si", $hdr, $m)) {
+	if (!preg_match("/(?:^|\\n)from:\s+?(.+?)(?:\\n\S+\:|$)/si", $hdr, $m)) {
 		$err = "Cannot get the \"from\" line";
 		goto out;
 	}
 	$from = clean_header_val($m[1]);
 
-	if (!preg_match("/(?:^|\\n)date:\s+?(.+?)(?:\\n\S+\:|\\n\\n)/si", $hdr, $m)) {
+	if (!preg_match("/(?:^|\\n)date:\s+?(.+?)(?:\\n\S+\:|$)/si", $hdr, $m)) {
 		$err = "Cannot get the \"date\" line";
 		goto out;
 	}
 	$date = clean_header_val($m[1]);
 
-	if (!preg_match("/(?:^|\\n)message-id:\s+?(.+?)(?:\\n\S+\:|\\n\\n)/si", $hdr, $m)) {
+	if (!preg_match("/(?:^|\\n)message-id:\s+?(.+?)(?:\\n\S+\:|$)/si", $hdr, $m)) {
 		$err = "Cannot get the \"message-id\" line";
 		goto out;
 	}
@@ -173,7 +173,7 @@ function fx(string $input): int
 	if ($msgId[0] === '<' && $msgId[strlen($msgId) - 1] === '>')
 		$msgId = substr(clean_header_val($msgId), 1, -1);
 
-	if (preg_match("/(?:^|\\n)in-reply-to:\s+?(.+?)(?:\\n\S+\:|\\n\\n)/si", $hdr, $m)) {
+	if (preg_match("/(?:^|\\n)in-reply-to:\s+?(.+?)(?:\\n\S+\:|$)/si", $hdr, $m)) {
 		$inReplyTo = $m[1];
 		if ($inReplyTo[0] === '<' && $inReplyTo[strlen($inReplyTo) - 1] === '>')
 			$inReplyTo = substr(clean_header_val($inReplyTo), 1, -1);
@@ -182,7 +182,7 @@ function fx(string $input): int
 	}
 
 	$err = "";
-	if (preg_match("/(?:^|\\n)to:\s+?(.+?)(?:\\n\S+\:|\\n\\n)/si", $hdr, $m)) {
+	if (preg_match("/(?:^|\\n)to:\s+?(.+?)(?:\\n\S+\:|$)/si", $hdr, $m)) {
 		$toList = extractList(clean_header_val($m[1]));
 		$toListStr = buildList($toList, "To");
 	} else {
